@@ -98,10 +98,15 @@ pre {
  * 2. Remove gaps in links underline in iOS 8+ and Safari 8+.
  */
 a {
-  background-color: transparent;
+  background: 0 0;
   /* 1 */
-  -webkit-text-decoration-skip: objects;
-  /* 2 */
+  color: #16a085;
+  font-style: normal;
+  text-decoration: inherit;
+}
+
+a:hover {
+  text-decoration: underline;
 }
 
 /**
@@ -447,10 +452,8 @@ template {
 .highlighter-rouge {
   color: #ce887b;
   font-weight: 400;
-  border: 1px solid #607D8B;
   -webkit-border-radius: 3px;
           border-radius: 3px;
-  padding: 0.1rem 0.5rem;
 }
 
 .highlight .hll {
@@ -770,11 +773,11 @@ template {
 }
 
 html {
-  line-height: 1.5;
+  line-height: 1.8;
 }
 
 body {
-  font-family: 'Lato', sans-serif;
+  font-family: lato-regular,"Helvetica Neue",Helvetica,Arial,"Hiragino Sans GB","Microsoft YaHei",sans-serif;
   color: #515151;
   background-color: #fbfbfb;
   margin: 0;
@@ -793,22 +796,23 @@ img {
 }
 
 blockquote {
-  border-left: 5px solid #000;
+  border-left: 5px solid #ecf0f1;
+  background-color: rgba(102, 128, 153, 0.03);
   padding-left: 1.1rem;
-  margin-left: 1rem;
-  font-style: italic;
+  margin-left: 0;
   color: #ada8a8;
 }
 
 pre {
   padding: 1rem 2rem;
   overflow-x: auto;
+  background-color: #f7f7f7 !important;
 }
 
 pre code {
+  background-color: inherit !important;
   border: 0;
-  padding-right: 0;
-  padding-left: 0;
+  padding: 0 !important;
 }
 
 table {

@@ -7,11 +7,11 @@
 }
 
 html {
-  line-height: 1.5;
+  line-height: 1.8;
 }
 
 body {
-  font-family: 'Lato', sans-serif;
+  font-family: lato-regular,"Helvetica Neue",Helvetica,Arial,"Hiragino Sans GB","Microsoft YaHei",sans-serif;
   color: $body-color;
   background-color: #fbfbfb;
   margin: 0;
@@ -30,21 +30,24 @@ img {
 }
 
 blockquote {
-  border-left: 5px solid #000;
+  border-left: 5px solid #ecf0f1;
+  background-color: rgba(102,128,153,.03);
   padding-left: 1.1rem;
-  margin-left: 1rem;
-  font-style: italic;
+  margin-left: 0;
+  //font-style: italic;
   color: #ada8a8;
 }
 
 pre {
   padding: 1rem 2rem;
   overflow-x: auto;
+  background-color: #f7f7f7 !important;
 
   code {
+    //font-family: monaco,Consolas,"Liberation Mono",Menlo,Courier,monospace;
+    background-color: inherit !important;
     border: 0;
-    padding-right: 0;
-    padding-left: 0;
+    padding: 0 !important;
   }
 }
 

@@ -1,9 +1,9 @@
 ---
 layout: post
 title: LAMP环境安装指引
-date: 2015-09-12 21:12:20 +0300
+date: 2016-09-12 21:12:20
 description: LAMP环境安装
-img: sword.gif # Add image post (optional)
+img: lamp_cover.png
 tags: [LAMP, Linux]
 ---
 
@@ -105,3 +105,5 @@ systemctl enable mysqld.service
 {% endhighlight %}
 
 最后，诸如redis，supervisor，git，vim等常用工具均可用yum安装。对于刚入门的小伙伴来说，搭建环境是一个很繁琐的过程。希望本文能对初学者有一点帮助：）
+
+![]({{site.baseurl}}/assets/img/sword.gif)
