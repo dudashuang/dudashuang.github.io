@@ -34,6 +34,7 @@ blockquote {
   background-color: rgba(102,128,153,.03);
   padding-left: 1.1rem;
   margin-left: 0;
+  margin-right: 0;
   //font-style: italic;
   color: #ada8a8;
 }
@@ -45,6 +46,7 @@ pre {
 
   code {
     //font-family: monaco,Consolas,"Liberation Mono",Menlo,Courier,monospace;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
     background-color: inherit !important;
     border: 0;
     padding: 0 !important;

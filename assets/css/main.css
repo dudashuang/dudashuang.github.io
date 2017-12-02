@@ -443,17 +443,10 @@ template {
 }
 
 .highlight {
-  background-color: #faf9f9;
+  background-color: #f7f7f7;
   -webkit-border-radius: 3px;
           border-radius: 3px;
   margin: 0;
-}
-
-.highlighter-rouge {
-  color: #ce887b;
-  font-weight: 400;
-  -webkit-border-radius: 3px;
-          border-radius: 3px;
 }
 
 .highlight .hll {
@@ -800,6 +793,7 @@ blockquote {
   background-color: rgba(102, 128, 153, 0.03);
   padding-left: 1.1rem;
   margin-left: 0;
+  margin-right: 0;
   color: #ada8a8;
 }
 
@@ -810,6 +804,7 @@ pre {
 }
 
 pre code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
   background-color: inherit !important;
   border: 0;
   padding: 0 !important;
@@ -1336,6 +1331,10 @@ a.newer-posts:hover {
 
 /* - - - - - - - - - - Media Styles - - - - - - - - - - */
 /* Medium Devices, Desktops */
+.post .post-content {
+  width: 100%;
+}
+
 @media only screen and (max-width: 992px) {
   .post {
     width: 48%;

@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Laravel学习笔记——神奇的服务容器
+title: Laravel学习笔记——服务容器
 date: 2016-10-13 22:29:12
 description: ioC容器，laravel的核心
 img: larasite.png
