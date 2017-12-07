@@ -3,7 +3,7 @@ layout: post
 title: RDS for Mysql 迁移至本地数据库并建立主从
 date: 2016-11-08 21:08:21
 description: 阿里云RDS迁移
-img: rds_for_mysql.png
+img: mysql_slave.png
 tags: [mysql, aliyun, linux]
 ---
 

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: mysql重置root账户密码
-date: 2017-4-28 23:28:12
+date: 2016-10-28 23:28:12
 description: mysql重置密码
 img: mysql_reset_password.png
 tags: [mysql]

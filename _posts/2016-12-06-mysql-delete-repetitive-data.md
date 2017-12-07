@@ -3,7 +3,7 @@ layout: post
 title: Mysql学习笔记 —— 删除某个字段的重复数据
 date: 2016-12-06 12:04:01
 description: mysql删除重复数据
-img:
+img: mysql_delete_repetitive_data.png
 tags: [mysql]
 ---
 
