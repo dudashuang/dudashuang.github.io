@@ -1,8 +1,8 @@
 ---
 layout: post
-title: Laravel学习笔记——服务容器
+title: Laravel 学习笔记 —— 服务容器
 date: 2016-10-13 22:29:12
-description: ioC容器，laravel的核心
+description: ioC 容器，laravel 的核心
 img: larasite.png
 tags: [laravel, php, 设计模式]
 ---
@@ -24,42 +24,44 @@ Laravel 的核心就是一个 IoC 容器，根据文档，称其为“服务容�
 怪物横行的世界，总归需要点超级人物来摆平。
 
 我们把一个“超人”作为一个类，
-
-    class Superman {}
-
+```php
+class Superman {}
+```
 
 我们可以想象，一个超人诞生的时候肯定拥有至少一个超能力，这个超能力也可以抽象为一个对象，为这个对象定义一个描述他的类吧。一个超能力肯定有多种属性、（操作）方法，这个尽情的想象，但是目前我们先大致定义一个只有属性的“超能力”，至于能干啥，我们以后再丰富：
+```php
+class Power 
+{
+    /**
+     * 能力值
+     */
+    protected $ability;
 
-    class Power 
+    /**
+     * 能力范围或距离
+     */
+    protected $range;
+
+    public function __construct($ability, $range)
     {
-        /**
-         * 能力值
-         */
-        protected $ability;
-    
-        /**
-         * 能力范围或距离
-         */
-        protected $range;
-    
-        public function __construct($ability, $range)
-        {
-            $this->ability = $ability;
-            $this->range = $range;
-        }
+        $this->ability = $ability;
+        $this->range = $range;
     }
+}
+```
 
 这时候我们回过头，修改一下之前的“超人”类，让一个“超人”创建的时候被赋予一个超能力：
+```php
+class Superman
+{
+    protected $power;
 
-    class Superman
+    public function __construct()
     {
-        protected $power;
-    
-        public function __construct()
-        {
-            $this->power = new Power(999, 100);
-        }
+        $this->power = new Power(999, 100);
     }
+}
+```
 
 
 这样的话，当我们创建一个“超人”实例的时候，同时也创建了一个“超能力”的实例，但是，我们看到了一点，“超人”和“超能力”之间不可避免的产生了一个依赖。
@@ -77,49 +79,52 @@ Laravel 的核心就是一个 IoC 容器，根据文档，称其为“服务容�
 * 能量弹，属性有：伤害值、射击距离、同时射击个数
 
 我们创建了如下类：
+```php
+class Flight
+{
+	protected $speed;
+	protected $holdtime;
+	public function __construct($speed, $holdtime) {}
+}
 
-	class Flight
-	{
-		protected $speed;
-		protected $holdtime;
-		public function __construct($speed, $holdtime) {}
-	}
+class Force
+{
+	protected $force;
+	public function __construct($force) {}
+}
 
-	class Force
-	{
-		protected $force;
-		public function __construct($force) {}
-	}
+class Shot
+{
+	protected $atk;
+	protected $range;
+	protected $limit;
+	public function __construct($atk, $range, $limit) {}
+}
+```
 
-	class Shot
-	{
-		protected $atk;
-		protected $range;
-		protected $limit;
-		public function __construct($atk, $range, $limit) {}
-	}
 
 为了省事儿我没有详细写出 __construct() 这个构造函数的全部，只写了需要传递的参数。
 
 好了，这下我们的超人有点“忙”了。在超人初始化的时候，我们会根据需要来实例化其拥有的超能力吗，大致如下：
+```php
+class Superman
+{
+    protected $power;
 
-	class Superman
-	{
-        protected $power;
-
-        public function __construct()
-        {
-            $this->power = new Fight(9, 100);
-            // $this->power = new Force(45);
-            // $this->power = new Shot(99, 50, 2);
-            /*
-            $this->power = array(
-                new Force(45),
-                new Shot(99, 50, 2)
-            );
-            */
-        }
-	}
+    public function __construct()
+    {
+        $this->power = new Fight(9, 100);
+        // $this->power = new Force(45);
+        // $this->power = new Shot(99, 50, 2);
+        /*
+        $this->power = array(
+            new Force(45),
+            new Shot(99, 50, 2)
+        );
+        */
+    }
+}
+```
 
 我们需要自己手动的在构造函数内（或者其他方法里）实例化一系列需要的类，这样并不好。可以想象，假如需求变更（不同的怪物横行地球），需要更多的有针对性的新的超能力，或者需要变更超能力的方法，我们必须重新改造超人。换句话说就是，改变超能力的同时，我还得重新制造个超人。效率太低了！新超人还没创造完成世界早已被毁灭。
 
@@ -138,66 +143,72 @@ Laravel 的核心就是一个 IoC 容器，根据文档，称其为“服务容�
 工厂模式，顾名思义，就是一个类所依赖的外部事物的实例，都可以被一个或多个 “工厂” 创建的这样一种开发模式，就是 “工厂模式”。
 
 我们为了给超人制造超能力模组，我们创建了一个工厂，它可以制造各种各样的模组，且仅需要通过一个方法：
-
-	class SuperModuleFactory
+```php
+class SuperModuleFactory
+{
+	public function makeModule($moduleName, $options)
 	{
-		public function makeModule($moduleName, $options)
-		{
-			switch ($moduleName) {
-				case 'Fight':   return new Fight($options[0], $options[1]);
-				case 'Force':   return new Force($options[0]);
-				case 'Shot':    return new Shot($options[0], $options[1], $options[2]);
-			}
+		switch ($moduleName) {
+			case 'Fight':   return new Fight($options[0], $options[1]);
+			case 'Force':   return new Force($options[0]);
+			case 'Shot':    return new Shot($options[0], $options[1], $options[2]);
 		}
 	}
+}
+
+```
 
 这时候，超人 创建之初就可以使用这个工厂！
+```php
+class Superman
+{
+	protected $power;
 
-	class Superman
+	public function __construct()
 	{
-		protected $power;
+		// 初始化工厂
+		$factory = new SuperModuleFactory;
 
-		public function __construct()
-		{
-			// 初始化工厂
-			$factory = new SuperModuleFactory;
-
-			// 通过工厂提供的方法制造需要的模块
-			$this->power = $factory->makeModule('Fight', [9, 100]);
-			// $this->power = $factory->makeModule('Force', [45]);
-			// $this->power = $factory->makeModule('Shot', [99, 50, 2]);
-			/*
-			$this->power = array(
-				$factory->makeModule('Force', [45]),
-				$factory->makeModule('Shot', [99, 50, 2])
-			);
-			*/
-		}
+		// 通过工厂提供的方法制造需要的模块
+		$this->power = $factory->makeModule('Fight', [9, 100]);
+		// $this->power = $factory->makeModule('Force', [45]);
+		// $this->power = $factory->makeModule('Shot', [99, 50, 2]);
+		/*
+		$this->power = array(
+			$factory->makeModule('Force', [45]),
+			$factory->makeModule('Shot', [99, 50, 2])
+		);
+		*/
 	}
+}
+
+```
 
 可以看得出，我们不再需要在超人初始化之初，去初始化许多第三方类，只需初始化一个工厂类，即可满足需求。但这样似乎和以前区别不大，只是没有那么多 new 关键字。其实我们稍微改造一下这个类，你就明白，工厂类的真正意义和价值了。
+```php
+class Superman
+{
+	protected $power;
 
-	class Superman
+	public function __construct(array $modules)
 	{
-		protected $power;
+		// 初始化工厂
+		$factory = new SuperModuleFactory;
 
-		public function __construct(array $modules)
-		{
-			// 初始化工厂
-			$factory = new SuperModuleFactory;
-
-			// 通过工厂提供的方法制造需要的模块
-			foreach ($modules as $moduleName => $moduleOptions) {
-					$this->power[] = $factory->makeModule($moduleName, $moduleOptions);
-			}
+		// 通过工厂提供的方法制造需要的模块
+		foreach ($modules as $moduleName => $moduleOptions) {
+			$this->power[] = $factory->makeModule($moduleName, $moduleOptions);
 		}
 	}
+}
 
-	// 创建超人
-	$superman = new Superman([
-		'Fight' => [9, 100], 
-		'Shot' => [99, 50, 2]
-		]);
+// 创建超人
+$superman = new Superman([
+	'Fight' => [9, 100], 
+	'Shot' => [99, 50, 2]
+]);
+
+```
 
 现在修改的结果令人满意。现在，“超人” 的创建不再依赖任何一个 “超能力” 的类，我们如若修改了或者增加了新的超能力，只需要针对修改 SuperModuleFactory 即可。扩充超能力的同时不再需要重新编辑超人的类文件，使得我们变得很轻松。但是，这才刚刚开始。
 
@@ -210,39 +221,42 @@ Laravel 的核心就是一个 IoC 容器，根据文档，称其为“服务容�
 我们知道，超人依赖的模组，我们要求有统一的接口，这样才能和超人身上的注入接口对接，最终起到提升超能力的效果。
 
 事实上，我之前说谎了，不仅仅只有一堆小怪兽，还有更多的大怪兽。嘿嘿。额，这时候似乎工厂的生产能力显得有些不足 —— 由于工厂模式下，所有的模组都已经在工厂类中安排好了，如果有新的、高级的模组加入，我们必须修改工厂类（好比增加新的生产线）：
-
-	class SuperModuleFactory
+```php
+class SuperModuleFactory
+{
+	public function makeModule($moduleName, $options)
 	{
-		public function makeModule($moduleName, $options)
-		{
-			switch ($moduleName) {
-				case 'Fight':   return new Fight($options[0], $options[1]);
-				case 'Force':   return new Force($options[0]);
-				case 'Shot':    return new Shot($options[0], $options[1], $options[2]);
-				// case 'more': .......
-				// case 'and more': .......
-				// case 'and more': .......
-				// case 'oh no! its too many!': .......
-			}
+		switch ($moduleName) {
+			case 'Fight':   return new Fight($options[0], $options[1]);
+			case 'Force':   return new Force($options[0]);
+			case 'Shot':    return new Shot($options[0], $options[1], $options[2]);
+			// case 'more': .......
+			// case 'and more': .......
+			// case 'and more': .......
+			// case 'oh no! its too many!': .......
 		}
 	}
+}
+```
+
 
 看到没。。。噩梦般的感受！
 
 > 其实灵感就差一步！你可能会想到更为灵活的办法！对，下一步就是我们今天的主要配角 —— DI （依赖注入）
 
 由于对超能力模组的需求不断增大，我们需要集合整个世界的高智商人才，一起解决问题，不应该仅仅只有几个工厂垄断负责。不过高智商人才们都非常自负，认为自己的想法是对的，创造出的超能力模组没有统一的接口，自然而然无法被正常使用。这时我们需要提出一种契约，这样无论是谁创造出的模组，都符合这样的接口，自然就可被正常使用。
-
-	interface SuperModuleInterface
-	{
-		/**
-		 * 超能力激活方法
-		 *
-		 * 任何一个超能力都得有该方法，并拥有一个参数
-		 *@param array $target 针对目标，可以是一个或多个，自己或他人
-		 */
-		public function activate(array $target);
-	}
+```php
+interface SuperModuleInterface
+{
+	/**
+	 * 超能力激活方法
+	 *
+	 * 任何一个超能力都得有该方法，并拥有一个参数
+	 *@param array $target 针对目标，可以是一个或多个，自己或他人
+	 */
+	public function activate(array $target);
+}
+```
 
 
 上文中，我们定下了一个接口 （超能力模组的规范、契约），所有被创造的模组必须遵守该规范，才能被生产。
@@ -252,40 +266,44 @@ Laravel 的核心就是一个 IoC 容器，根据文档，称其为“服务容�
 虽然有些绕，但通过我们接下来的实例，大家会慢慢领会接口带来的好处。
 
 这时候，那些提出更好的超能力模组的高智商人才，遵循这个接口，创建了下述（模组）类：
-
-	/**
-	 * X-超能量
-	 */
-	class XPower implements SuperModuleInterface
+```php
+/**
+ * X-超能量
+ */
+class XPower implements SuperModuleInterface
+{
+	public function activate(array $target)
 	{
-		public function activate(array $target)
-		{
-			// 这只是个例子。。具体自行脑补
-		}
+		// 这只是个例子。。具体自行脑补
 	}
+}
 
-	/**
-	 * 终极炸弹 （就这么俗）
-	 */
-	class UltraBomb implements SuperModuleInterface
+/**
+ * 终极炸弹 （就这么俗）
+ */
+class UltraBomb implements SuperModuleInterface
+{
+	public function activate(array $target)
 	{
-		public function activate(array $target)
-		{
-			// 这只是个例子。。具体自行脑补
-		}
+		// 这只是个例子。。具体自行脑补
 	}
+}
+
+```
 
 同时，为了防止有些 “砖家” 自作聪明，或者一些叛徒恶意捣蛋，不遵守契约胡乱制造模组，影响超人，我们对超人初始化的方法进行改造：
+```php
+class Superman
+{
+	protected $module;
 
-	class Superman
+	public function __construct(SuperModuleInterface $module)
 	{
-		protected $module;
-
-		public function __construct(SuperModuleInterface $module)
-		{
-			$this->module = $module
-		}
+		$this->module = $module;
 	}
+}
+```
+
 
 改造完毕！现在，当我们初始化 “超人” 类的时候，提供的模组实例必须是一个 SuperModuleInterface 接口的实现。否则就会提示错误。
 
@@ -298,82 +316,90 @@ Laravel 的核心就是一个 IoC 容器，根据文档，称其为“服务容�
 什么叫做 依赖注入？
 
 本文从开头到现在提到的一系列依赖，只要不是由内部生产（比如初始化、构造函数 __construct 中通过工厂方法、自行手动 new 的），而是由外部以参数或其他形式注入的，都属于 依赖注入（DI） 。是不是豁然开朗？事实上，就是这么简单。下面就是一个典型的依赖注入：
+```php
+// 超能力模组
+$superModule = new XPower;
 
-	// 超能力模组
-	$superModule = new XPower;
+// 初始化一个超人，并注入一个超能力模组依赖
+$superMan = new Superman($superModule);
+```
 
-	// 初始化一个超人，并注入一个超能力模组依赖
-	$superMan = new Superman($superModule);
 
 关于依赖注入这个本文的主要配角，也就这么多需要讲的。理解了依赖注入，我们就可以继续深入问题。慢慢走近今天的主角……
 
 **更为先进的工厂 —— IoC 容器！**
 
 刚刚列了一段代码：
+```php
+$superModule = new XPower;
 
-	$superModule = new XPower;
+$superMan = new Superman($superModule);
+```
 
-	$superMan = new Superman($superModule);
 
 读者应该看出来了，手动的创建了一个超能力模组、手动的创建超人并注入了刚刚创建超能力模组。呵呵，手动。
 
 > 现代社会，应该是高效率的生产，干净的车间，完美的自动化装配。
 
 一群怪兽来了，如此低效率产出超人是不现实，我们需要自动化 —— 最多一条指令，千军万马来相见。我们需要一种高级的生产车间，我们只需要向生产车间提交一个脚本，工厂便能够通过指令自动化生产。这种更为高级的工厂，就是工厂模式的升华 —— IoC 容器。
+```php
+class Container
+{
+	protected $binds;
 
-	class Container
+	protected $instances;
+
+	public function bind($abstract, $concrete)
 	{
-		protected $binds;
-
-		protected $instances;
-
-		public function bind($abstract, $concrete)
-		{
-			if ($concrete instanceof Closure) {
-				$this->binds[$abstract] = $concrete;
-			} else {
-				$this->instances[$abstract] = $concrete;
-			}
-		}
-
-		public function make($abstract, $parameters = [])
-		{
-			if (isset($this->instances[$abstract])) {
-				return $this->instances[$abstract];
-			}
-
-			array_unshift($parameters, $this);
-
-			return call_user_func_array($this->binds[$abstract], $parameters);
+		if ($concrete instanceof Closure) {
+			$this->binds[$abstract] = $concrete;
+		} else {
+			$this->instances[$abstract] = $concrete;
 		}
 	}
 
+	public function make($abstract, $parameters = [])
+	{
+		if (isset($this->instances[$abstract])) {
+			return $this->instances[$abstract];
+		}
+
+		array_unshift($parameters, $this);
+
+		return call_user_func_array($this->binds[$abstract], $parameters);
+	}
+}
+
+```
+
 这时候，一个十分粗糙的容器就诞生了。现在的确很简陋，但不妨碍我们进一步提升他。先着眼现在，看看这个容器如何使用吧！
+```php
+// 创建一个容器（后面称作超级工厂）
+$container = new Container;
 
-	// 创建一个容器（后面称作超级工厂）
-	$container = new Container;
+// 向该 超级工厂 添加 超人 的生产脚本
+$container->bind('superman', function($container, $moduleName) {
+	return new Superman($container->make($moduleName));
+});
 
-	// 向该 超级工厂 添加 超人 的生产脚本
-	$container->bind('superman', function($container, $moduleName) {
-		return new Superman($container->make($moduleName));
-	});
+// 向该 超级工厂 添加 超能力模组 的生产脚本
+$container->bind('xpower', function($container) {
+	return new XPower;
+});
 
-	// 向该 超级工厂 添加 超能力模组 的生产脚本
-	$container->bind('xpower', function($container) {
-		return new XPower;
-	});
+// 同上
+$container->bind('ultrabomb', function($container) {
+	return new UltraBomb;
+});
 
-	// 同上
-	$container->bind('ultrabomb', function($container) {
-		return new UltraBomb;
-	});
+// ******************  华丽丽的分割线  **********************
+// 开始启动生产
+$superman_1 = $container->make('superman', ['xpower']);
+$superman_2 = $container->make('superman', ['ultrabomb']);
+$superman_3 = $container->make('superman', ['xpower']);
+// ...随意添加
+```
 
-	// ******************  华丽丽的分割线  **********************
-	// 开始启动生产
-	$superman_1 = $container->make('superman', ['xpower']);
-	$superman_2 = $container->make('superman', ['ultrabomb']);
-	$superman_3 = $container->make('superman', ['xpower']);
-	// ...随意添加
 
 看到没？通过最初的 绑定（bind） 操作，我们向 超级工厂 注册了一些生产脚本，这些生产脚本在生产指令下达之时便会执行。发现没有？我们彻底的解除了 超人 与 超能力模组 的依赖关系，更重要的是，容器类也丝毫没有和他们产生任何依赖！我们通过注册、绑定的方式向容器中添加一段可以被执行的回调（可以是匿名函数、非匿名函数、类的方法）作为生产一个类的实例的 脚本 ，只有在真正的 生产（make） 操作被调用执行时，才会触发。
 
@@ -394,10 +420,12 @@ Laravel 的核心就是一个 IoC 容器，根据文档，称其为“服务容�
 可以说，laravel 的核心本身十分轻量，并没有什么很神奇很实质性的应用功能。很多人用到的各种功能模块比如 Route（路由）、Eloquent ORM（数据库 ORM 组件）、Request and Response（请求和响应）等等等等，实际上都是与核心无关的类模块提供的，这些类从注册到实例化，最终被你所使用，其实都是 laravel 的服务容器负责的。
 
 我们以大家最常见的 Route 类作为例子。大家可能经常见到路由定义是这样的：
-
-	Route::get('/', function() {
-		// bla bla bla...
-	});
+```php
+Route::get('/', function() {
+	// bla bla bla...
+});
+```
+	
 
 实际上， Route 类被定义在这个命名空间：Illuminate\Routing\Router，文件 vendor/laravel/framework/src/Illuminate/Routing/Router.php。
 
@@ -422,25 +450,28 @@ Laravel 的核心就是一个 IoC 容器，根据文档，称其为“服务容�
 我们使用的 Route 类实际上是 Illuminate\Support\Facades\Route 通过 class_alias() 函数创造的 别名 而已，这个类被定义在文件 vendor/laravel/framework/src/Illuminate/Support/Facades/Route.php 。
 
 我们打开文件一看……诶？怎么只有这么简单的一段代码呢？
+```php
+<?php 
+namespace Illuminate\Support\Facades;
 
-	<?php namespace Illuminate\Support\Facades;
+/**
+ * @see \Illuminate\Routing\Router
+ */
+class Route extends Facade {
 
 	/**
-	 * @see \Illuminate\Routing\Router
+	 * Get the registered name of the component.
+	 *
+	 * @return string
 	 */
-	class Route extends Facade {
-
-		/**
-		 * Get the registered name of the component.
-		 *
-		 * @return string
-		 */
-		protected static function getFacadeAccessor()
-		{
-			return 'router';
-		}
-
+	protected static function getFacadeAccessor()
+	{
+		return 'router';
 	}
+
+}
+```
+
 
 
 其实仔细看，会发现这个类继承了一个叫做 Facade 的类，到这里谜底差不多要解开了。
