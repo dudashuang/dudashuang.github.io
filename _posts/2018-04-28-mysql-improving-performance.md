@@ -215,3 +215,7 @@ select b.age, b.id from b where b.id in (b.ids);
 ```
 - 在分页时，`limit 10 offset 3000000`可以换成`where id > ? limit 10`,适用于`id`顺序增长。
 
+## 参考文献
+- [美团点评-MySQL索引原理及慢查询优化](https://tech.meituan.com/mysql-index.html?utm_source=wechat_session&utm_medium=social&utm_member=ZWE0OGU5YjE3NzdmOTNjNzlmZTIzMzA4OTZiMGVlMTU%3D%0A&from=singlemessage)
+
+- [MySQL中EXPLAIN命令详解](http://overtrue.me/articles/2014/10/mysql-explain.html)
