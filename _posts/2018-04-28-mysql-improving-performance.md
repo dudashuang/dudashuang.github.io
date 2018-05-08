@@ -51,33 +51,33 @@ tags: [mysql]
 我们需要这种数据结构能够做些什么，其实很简单，那就是：每次查找数据时把磁盘IO次数控制在一个很小的数量级，
 最好是常数数量级。那么我们就想到如果一个高度可控的多路搜索树是否能满足需求呢？就这样，`b+`树应运而生。
 
-### 详解`b+`树
+### 详解B+树
 
 ![]({{site.baseurl}}/assets/img/btree.jpg)
 
-如上图，是一颗`b+`树，关于b+树的定义可以参见[b+树](https://zh.wikipedia.org/wiki/B%2B%E6%A0%91)树，
+如上图，是一颗`b+`树，关于b+树的定义可以参见[b+树](https://zh.wikipedia.org/wiki/B%2B%E6%A0%91)，
 这里只说一些重点，浅蓝色的块我们称之为一个磁盘块，
 可以看到每个磁盘块包含几个数据项（深蓝色所示）和指针（黄色所示），如磁盘块1包含数据项17和35，
 包含指针P1、P2、P3，P1表示小于17的磁盘块，P2表示在17和35之间的磁盘块，P3表示大于35的磁盘块。
 真实的数据存在于叶子节点即3、5、9、10、13、15、28、29、36、60、75、79、90、99。
 非叶子节点只不存储真实的数据，只存储指引搜索方向的数据项，如17、35并不真实存在于数据表中。
 
-### `b+`树的查找过程
-如图所示，如果要查找数据项29，那么首先会把磁盘块1由磁盘加载到内存，此时发生一次IO，
-在内存中用二分查找确定29在17和35之间，锁定磁盘块1的P2指针，内存时间因为非常短（相比磁盘的IO）可以忽略不计，
-通过磁盘块1的P2指针的磁盘地址把磁盘块3由磁盘加载到内存，发生第二次IO，29在26和30之间，
-锁定磁盘块3的P2指针，通过指针加载磁盘块8到内存，发生第三次IO，同时内存中做二分查找找到29，结束查询，
-总计三次IO。真实的情况是，3层的b+树可以表示上百万的数据，如果上百万的数据查找只需要三次IO，
+### B+树的查找过程
+如图所示，如果要查找数据项29，那么首先会在内存中用二分查找确定29在17和35之间，（根节点常驻内存）
+锁定磁盘块1的P2指针，内存时间因为非常短（相比磁盘的IO）可以忽略不计，
+通过磁盘块1的P2指针的磁盘地址把磁盘块3由磁盘加载到内存，发生第一次IO，29在26和30之间，
+锁定磁盘块3的P2指针，通过指针加载磁盘块8到内存，发生第二次IO，同时内存中做二分查找找到29，结束查询，
+总计两次IO。真实的情况是，3层的b+树可以表示上百万的数据，如果上百万的数据查找只需要两次IO，
 性能提高将是巨大的，如果没有索引，每个数据项都要发生一次IO，那么总共需要百万次的IO，显然成本非常非常高。
 
-### `b+`树性质
+### B+树性质
 
-1. 通过上面的分析，我们知道IO次数取决于b+数的高度h，假设当前数据表的数据为`N`，每个磁盘块的数据项的数量是m，
+1. 通过上面的分析，我们知道IO次数（h - 1）取决于b+数的高度h，假设当前数据表的数据为`N`，每个磁盘块的数据项的数量是m，
 则有`h=㏒(m+1)N`，当数据量N一定的情况下，m越大，h越小；而`m = 磁盘块的大小 / 数据项的大小`，
 磁盘块的大小也就是一个数据页的大小，是固定的，如果数据项占的空间越小，数据项的数量越多，树的高度越低。
 这就是为什么每个数据项，即索引字段要尽量的小，比如`int`占4字节，要比`bigint`8字节少一半。
 这也是为什么b+树要求把真实的数据放到叶子节点而不是内层节点，一旦放到内层节点，磁盘块的数据项会大幅度下降，
-导致树增高。当数据项等于1时将会退化成线性表。
+导致树增高。当数据项等于1时将会退化成线性表,事实上，磁盘块通常很大，树的高度通常不超过3。
 2. 当b+树的数据项是复合的数据结构，比如(name,age,sex)的时候，b+数是按照从左到右的顺序来建立搜索树的，
 比如当(张三,20,F)这样的数据来检索的时候，b+树会优先比较name来确定下一步的所搜方向，
 如果name相同再依次比较age和sex，最后得到检索的数据；但当(20,F)这样的没有name的数据来的时候，
@@ -105,54 +105,55 @@ mysql的查询优化器会帮你优化成索引可以识别的形式
 ### 索引覆盖
 
 - 当我们使用`innodb`引擎存储数据时，mysql 会建立一个聚簇索引，即以主键建立一个`B+`树，
-在叶子节点中存放实际数据。所以当我们基于主键查询时，速度会非常快。
+在叶子节点中存放实际数据。所以当我们基于主键查询时，速度会非常快。注意，聚簇索引并不是一种单独的
+索引类型，而是一种数据存储方式，即在同一结构中保存索引和数据行。
+- 如果没有定义主键，innodb会选择一个唯一的非空索引代替，如果没有这样的索引，会隐式定义一个主键来作为聚簇索引。
 - 而普通索引叶子节点中存放的为主键，并不是数据项的实际物理位置。
-所以基于普通索引的查询很有可能发生两次查找（1通过普通索引取主键，2通过主键查找数据）。
+所以基于普通索引的查询很有可能发生两次查找（1通过普通索引取主键，2通过主键查找数据也就是所谓的回表）。
 - 如果我们需要`select`的数据刚好都在索引中时，则会省略第二步的查找，即索引覆盖，如下：
-
 ```
-# 聚合索引 idex_cov(name, age)，一次查找
-select name, age from student where name = 'aa';
-
-## 单列索引 idex_name(name), 俩次查找
-select name, age from student where name = 'aa';
+	#聚合索引 idex_cov(name, age)，一次查找
+	select name, age from student where name = 'aa';
+	
+	##单列索引 idex_name(name), 俩次查找
+	select name, age from student where name = 'aa';
 ```
 
 ## mysql `join` 原理
 
 - mysql 在 `join` 上只实现了一种算法[Nested-Loop Join](https://dev.mysql.com/doc/refman/5.7/en/nested-loop-joins.html),
 即嵌套循环，性能比较一般：
-```
-Table   Join Type
-t1      range
-t2      ref
-t3      ALL
-```
-
-```
-for each row in t1 matching range {
-  for each row in t2 matching reference key {
-    for each row in t3 {
-      if row satisfies join conditions, send to client
-    }
-  }
-}
-```
+	```
+	Table   Join Type
+	t1      range
+	t2      ref
+	t3      ALL
+	```
+	
+	```
+	for each row in t1 matching range {
+	  for each row in t2 matching reference key {
+	    for each row in t3 {
+	      if row satisfies join conditions, send to client
+	    }
+	  }
+	}
+	```
 
 - 具体过程是，mysql 优化器会对`t1`, `t2`, `t3` 3张表分别筛选，取出结果集较小`t1`的作为驱动表，
 然后遍历`t1`的结果集，依次判断是否存在`t2`结果集中，如果在则继续判断是否存在`t3`结果集中。
 如果不存在则跳出次轮循环继续下一轮,只针对于`inner join`。
 
-```
-select o.paid_at, ab.name as branch_name, o.payment_type, o.payment_scene, ro.total_amount
-from receipt_orders as ro
-inner join orders as o on o.order_id = ro.orders_id
-left join app_branches as ab on ab.id = ro.branch_id
-where o.app_id = ?
-and o.paid_at between ? and ?;
-```
+	```
+	select o.paid_at, ab.name as branch_name, o.payment_type, o.payment_scene, ro.total_amount
+	from receipt_orders as ro
+	inner join orders as o on o.order_id = ro.orders_id
+	left join app_branches as ab on ab.id = ro.branch_id
+	where o.app_id = ?
+	and o.paid_at between ? and ?;
+	```
 
-如上例所示，当`ro`和`o`两张表都筛选出百万的结果集时，性能的压力将会变得巨大。解决方法：添加冗余字段，避免大表`join`。
+	如上例所示，当`ro`和`o`两张表都筛选出百万的结果集时，性能的压力将会变得巨大。解决方法：添加冗余字段，避免大表`join`。
 
 ## 慢查询优化步骤
 
@@ -168,52 +169,57 @@ and o.paid_at between ? and ?;
 
 - example
 
-```
-explain select count(*) from a;
-```
+	```
+	explain select count(*) from a;
+	```
 
 - `explain` 列的解释,具体参考[explain-out](https://dev.mysql.com/doc/refman/5.7/en/explain-output.html)：
 
-|  列  |  描述  |
-| ---- | ---- |
-| `table` | 显示这一行的数据是关于哪张表的。|
-| `type` | 这是重要的列，显示连接使用了何种类型。从最好到最差的连接类型为 `const`、`eq_reg`、`ref`、`range`、`index`和`ALL`。 |
-| `possible_keys` | 显示可能应用在这张表中的索引。如果为空，没有可能的索引。可以为相关的域从`WHERE`语句中选择一个合适的语句。 | 
-| `key` |  实际使用的索引。如果为`NULL`，则没有使用索引。很少的情况下，MySQL会选择优化不足的索引。这种情况下，可以在`SELECT`语句中使用`USE INDEX（indexname）` 来强制使用一个索引或者用`IGNORE INDEX（indexname）`来强制MySQL忽略索引。 |
-| `key_len` | 使用的索引的长度。在不损失精确性的情况下，长度越短越好。  |
-| `ref` | 显示索引的哪一列被使用了，如果可能的话，是一个常数。 | 
-| `rows` | MySQL认为必须检查的用来返回请求数据的行数。 |
-| `Extra` | 关于MySQL如何解析查询的额外信息。将在下表中讨论，但这里可以看到的坏的例子是`Using temporary`和`Using filesort`，意思MySQL根本不能使用索引，结果是检索会很慢。  |
+	|  列  |  描述  |
+	| ---- | ---- |
+	| `table` | 显示这一行的数据是关于哪张表的。|
+	| `type` | 这是重要的列，显示连接使用了何种类型。从最好到最差的连接类型为 `const`、`eq_reg`、`ref`、`range`、`index`和`ALL`。 |
+	| `possible_keys` | 显示可能应用在这张表中的索引。如果为空，没有可能的索引。可以为相关的域从`WHERE`语句中选择一个合适的语句。 | 
+	| `key` |  实际使用的索引。如果为`NULL`，则没有使用索引。很少的情况下，MySQL会选择优化不足的索引。这种情况下，可以在`SELECT`语句中使用`USE INDEX（indexname）` 来强制使用一个索引或者用`IGNORE INDEX（indexname）`来强制MySQL忽略索引。 |
+	| `key_len` | 使用的索引的长度。在不损失精确性的情况下，长度越短越好。  |
+	| `ref` | 显示索引的哪一列被使用了，如果可能的话，是一个常数。 | 
+	| `rows` | MySQL认为必须检查的用来返回请求数据的行数。 |
+	| `Extra` | 关于MySQL如何解析查询的额外信息。将在下表中讨论，但这里可以看到的坏的例子是`Using temporary`和`Using filesort`，意思MySQL根本不能使用索引，结果是检索会很慢。  |
 
 - `extra` 列返回的描述的意义：
 
-| 值 | 意义 |
-| ---- | ---- |
-| `Distinct` | 一旦MySQL找到了与行相联合匹配的行，就不再搜索了。 |
-| `Not exists` | MySQL优化了`LEFT JOIN`，一旦它找到了匹配`LEFT JOIN`标准的行，就不再搜索了。| 
-| `Range checked for each Record（index map:#）` | 没有找到理想的索引，因此对于从前面表中来的每一个行组合，MySQL检查使用哪个索引，并用它来从表中返回行。这是使用索引的最慢的连接之一。|
-| `Using filesort` | 看到这个的时候，查询就需要优化了。MySQL需要进行额外的步骤来发现如何对返回的行排序。它根据连接类型以及存储排序键值和匹配条件的全部行的行指针来排序全部行。|
-| `Using index` | 列数据是从仅仅使用了索引中的信息而没有读取实际的行动的表返回的，这发生在对表的全部的请求列都是同一个索引的部分的时候。|
-| `Using temporary` | 看到这个的时候，查询需要优化了。这里，MySQL需要创建一个临时表来存储结果，这通常发生在对不同的列集进行`ORDER BY`上，而不是`GROUP BY`上。 |
-| `Where used` | 使用了`WHERE`从句来限制哪些行将与下一张表匹配或者是返回给用户。如果不想返回表中的全部行，并且连接类型`ALL`或`index`，这就会发生，或者是查询有问题不同连接类型的解释（按照效率高低的顺序排序）。 |
-| `system` | 表只有一行 `system` 表。这是const连接类型的特殊情况 。 |
-| `const` | 表中的一个记录的最大值能够匹配这个查询（索引可以是主键或惟一索引）。因为只有一行，这个值实际就是常数，因为MySQL先读这个值然后把它当做常数来对待。 |
-| `eq_ref` | 在连接中，MySQL在查询时，从前面的表中，对每一个记录的联合都从表中读取一个记录，它在查询使用了索引为主键或惟一键的全部时使用。|
-| `ref` | 这个连接类型只有在查询使用了不是惟一或主键的键或者是这些类型的部分（比如，利用最左边前缀）时发生。对于之前的表的每一个行联合，全部记录都将从表中读出。这个类型严重依赖于根据索引匹配的记录多少—越少越好。|
-| `range` | 这个连接类型使用索引返回一个范围中的行，比如使用>或<查找东西时发生的情况。|
-| `index` | 这个连接类型对前面的表中的每一个记录联合进行完全扫描（比`ALL`更好，因为索引一般小于表数据）。|
-| `ALL` | 这个连接类型对于前面的每一个记录联合进行完全扫描，这一般比较糟糕，应该尽量避免。 | 
+	| 值 | 意义 |
+	| ---- | ---- |
+	| `Distinct` | 一旦MySQL找到了与行相联合匹配的行，就不再搜索了。 |
+	| `Not exists` | MySQL优化了`LEFT JOIN`，一旦它找到了匹配`LEFT JOIN`标准的行，就不再搜索了。| 
+	| `Range checked for each Record（index map:#）` | 没有找到理想的索引，因此对于从前面表中来的每一个行组合，MySQL检查使用哪个索引，并用它来从表中返回行。这是使用索引的最慢的连接之一。|
+	| `Using filesort` | 看到这个的时候，查询就需要优化了。MySQL需要进行额外的步骤来发现如何对返回的行排序。它根据连接类型以及存储排序键值和匹配条件的全部行的行指针来排序全部行。|
+	| `Using index` | 列数据是从仅仅使用了索引中的信息而没有读取实际的行动的表返回的，这发生在对表的全部的请求列都是同一个索引的部分的时候。|
+	| `Using temporary` | 看到这个的时候，查询需要优化了。这里，MySQL需要创建一个临时表来存储结果，这通常发生在对不同的列集进行`ORDER BY`上，而不是`GROUP BY`上。 |
+	| `Where used` | 使用了`WHERE`从句来限制哪些行将与下一张表匹配或者是返回给用户。如果不想返回表中的全部行，并且连接类型`ALL`或`index`，这就会发生，或者是查询有问题不同连接类型的解释（按照效率高低的顺序排序）。 |
+	| `system` | 表只有一行 `system` 表。这是const连接类型的特殊情况 。 |
+	| `const` | 表中的一个记录的最大值能够匹配这个查询（索引可以是主键或惟一索引）。因为只有一行，这个值实际就是常数，因为MySQL先读这个值然后把它当做常数来对待。 |
+	| `eq_ref` | 在连接中，MySQL在查询时，从前面的表中，对每一个记录的联合都从表中读取一个记录，它在查询使用了索引为主键或惟一键的全部时使用。|
+	| `ref` | 这个连接类型只有在查询使用了不是惟一或主键的键或者是这些类型的部分（比如，利用最左边前缀）时发生。对于之前的表的每一个行联合，全部记录都将从表中读出。这个类型严重依赖于根据索引匹配的记录多少—越少越好。|
+	| `range` | 这个连接类型使用索引返回一个范围中的行，比如使用>或<查找东西时发生的情况。|
+	| `index` | 这个连接类型对前面的表中的每一个记录联合进行完全扫描（比`ALL`更好，因为索引一般小于表数据）。|
+	| `ALL` | 这个连接类型对于前面的每一个记录联合进行完全扫描，这一般比较糟糕，应该尽量避免。 | 
 
 ## 杂记
 - `select count(*)`要比`select count(column)`快，即使`column`为主键，
-mysql在解析`count(*)`时会将`*`理解为常量，事实上你可以`select count(0)`, `select count(1)`...
+mysql在解析`count(*)`时会忽略所有列，直接统计行数，事实上你可以`select count(0)`, `select count(1)`...
 - `select a.id, a.name, b.age from a inner join b on a.b_id = b.id limit 10;`当`a`,`b`表都
 很大时，在业务层分两步查询，往往会更快。
-```
-select a.id, a.name, a.b_id from a limit 10;
-select b.age, b.id from b where b.id in (b.ids);
-```
+	```
+	select a.id, a.name, a.b_id from a limit 10;
+	select b.age, b.id from b where b.id in (b.ids);
+	```
 - 在分页时，`limit 10 offset 3000000`可以换成`where id > ? limit 10`,适用于`id`顺序增长。
+- 通常来说把可为`null`的列改为`not null`不会对性能提升有多少帮助，只是如果计划在列上创建索引，就应该将该列设置为`nut null`。
+- 对整数类型指定宽度，比如`int(11)`，没有任何卵用。`int`使用32位（4个字节）存储空间，那么它的表示范围已经确定，所以`int(1)`和`int(20)`对于存储和计算是相同的。
+- `unsigned`表示不允许负值，大致可以使正数的上限提高一倍。比如`tinyint`存储范围是`-128 ~ 127`，而`unsigned tinyint`存储的范围却是`0 - 255`。
+- schema的列不要太多。原因是存储引擎的API工作时需要在服务器层和存储引擎层之间通过行缓冲格式拷贝数据，然后在服务器层将缓冲内容解码成各个列，这个转换过程的代价是非常高的。如果列太多而实际使用的列又很少的话，有可能会导致CPU占用过高。
+- 大表添加新字段非常耗时，可以在创建之初就预留几个备用字段，但不宜过多。
 
 ## 参考文献
 - [美团点评-MySQL索引原理及慢查询优化](https://tech.meituan.com/mysql-index.html?utm_source=wechat_session&utm_medium=social&utm_member=ZWE0OGU5YjE3NzdmOTNjNzlmZTIzMzA4OTZiMGVlMTU%3D%0A&from=singlemessage)
