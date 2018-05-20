@@ -789,6 +789,7 @@ img {
 }
 
 blockquote {
+  overflow: auto;
   border-left: 5px solid #16a085;
   background-color: rgba(100, 255, 100, 0.1);
   padding-left: 1.1rem;
