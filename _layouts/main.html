@@ -2,7 +2,7 @@
 layout: default
 ---
 
-<aside class="sidebar">
+<!--<aside class="sidebar">-->
     <header>
         <div class="about">
             <div class="cover-author-image">
@@ -14,23 +14,25 @@ layout: default
             <p>{{site.about-author}}</p>
         </div>
     </header>
-    <footer>
-        <section class="contact">
-            <h3 class="contact-title">Contact me</h3>
-            <ul>
-                <li class="weibo"><a href="https://weibo.com/{{site.weibo}}" target="_blank"><i
-                        class="fa fa-weibo"></i></a></li>
-                <li class="github"><a href="https://github.com/{{site.github}}" target="_blank"><i
-                        class="fa fa-github"></i></a></li>
 
-                <li class="email"><a href="mailto:{{site.email}}"><i class="fa fa-envelope-o"></i></a></li>
-            </ul>
-        </section>
-        <div class="copyright">
-            <p>{{site.time | date: '%Y'}} &copy; {{site.author}}</p>
-        </div>
-    </footer>
-</aside>
+<!--</aside>-->
 <div class="content-box clearfix">
     {{ content }}
 </div>
+
+<footer>
+    <section class="contact">
+        <h3 class="contact-title">Contact me</h3>
+        <ul>
+            <li class="weibo"><a href="https://weibo.com/{{site.weibo}}" target="_blank"><i
+                    class="fa fa-weibo"></i></a></li>
+            <li class="github"><a href="https://github.com/{{site.github}}" target="_blank"><i
+                    class="fa fa-github"></i></a></li>
+
+            <li class="email"><a href="mailto:{{site.email}}"><i class="fa fa-envelope-o"></i></a></li>
+        </ul>
+    </section>
+    <div class="copyright">
+        <p>{{site.time | date: '%Y'}} &copy; {{site.author}}</p>
+    </div>
+</footer>

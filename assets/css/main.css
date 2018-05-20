@@ -789,8 +789,8 @@ img {
 }
 
 blockquote {
-  border-left: 5px solid #ecf0f1;
-  background-color: rgba(102, 128, 153, 0.03);
+  border-left: 5px solid #16a085;
+  background-color: rgba(100, 255, 100, 0.1);
   padding-left: 1.1rem;
   margin-left: 0;
   margin-right: 0;
@@ -868,7 +868,7 @@ table tfoot td {
 }
 
 .wrapper {
-  max-width: 1250px;
+  /*max-width: 1250px;*/
   position: relative;
 }
 
@@ -928,7 +928,7 @@ table tfoot td {
 .about .cover-author-image {
   width: 100px;
   height: 100px;
-  margin: 0 auto 10px;
+  margin: 10px auto 10px;
   -webkit-border-radius: 100%;
           border-radius: 100%;
   overflow: hidden;
@@ -986,7 +986,9 @@ table tfoot td {
 
 .content-box {
   padding: 20px;
-  padding-left: 260px;
+  /*padding-left: 260px;*/
+  max-width: 1000px;
+  margin: 0 auto;
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
