@@ -2,19 +2,19 @@ title: Dudashuang | 汪文超
 description: > # this means to ignore newlines until "baseurl:"
   dudashuang's blog.
 permalink: ':title/'
-baseurl: "" # the subpath of your site, e.g. /blog
+baseurl: "" # the sub path of your site, e.g. /blog
 url: "http://dudashuang.com" # the base hostname & protocol for your site, e.g. http://example.com
 site-twitter: #if your site has a twitter account, enter it here
 
 # Author Settings
 author: Dashuang Du. # add your name
 author-img: dudashuang_avator.png # add your photo
-about-author: I am a developer focusing on web development. Always hungry to keep learning. # add description
+about-author: study and practice, years of it. # add description
 weibo: 2948713645 # add your Facebook handle
 github: dudashuang # add your Github handle
 email: dudashuang1222@gmail.com # add your Email address
 
-# Disqus
+# Discus
 discus-identifier:  # add your discus identifier
 
 # Tracker
