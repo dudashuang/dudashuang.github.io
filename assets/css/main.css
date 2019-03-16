@@ -1082,7 +1082,8 @@ table tfoot td {
 }
 
 footer .copyright {
-  font-size: 14px;
+  font-size: 12px;
+  color: #333b43;
   text-align: center;
   margin: 0;
 }
