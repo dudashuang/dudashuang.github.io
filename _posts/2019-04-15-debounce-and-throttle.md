@@ -10,7 +10,7 @@ tags: [javascript]
 
 ***L型：需要在按下子弹键后，松开按键一段时间，子弹才能发射出去***
 
-<center>![]({{site.baseurl}}/assets/img/hdl_l.gif)</center>
+![]({{site.baseurl}}/assets/img/hdl_l.gif)
 
 这就涉及到了“防抖”的概念，“防抖”指的是`n`秒内函数只被调用一次，且每次的调用都重新计算时间，实现起来也很简单：
 
@@ -46,7 +46,7 @@ for (let i = 0; i < 5; i++) {
 ```
 
 
-<center>![]({{site.baseurl}}/assets/img/debounce.png)</center>
+![]({{site.baseurl}}/assets/img/debounce.png)
 
 你快速按下5次发射键，只窜出去一根小火苗，“防抖”的重点是在触发事件停止n秒后才去执行动作，在这之前的触发事件都将被抑制。
 
@@ -59,7 +59,7 @@ for (let i = 0; i < 5; i++) {
 
 ***M型：发射间隔固定500ms***
 
-<center>![]({{site.baseurl}}/assets/img/hdl_m.gif)</center>
+![]({{site.baseurl}}/assets/img/hdl_m.gif)
 
 M型子弹发射间隔固定，每秒至多2发，“节流”指的是n秒内执行一次，执行一次后，只有大于执行周期，才会执行第二次
 
@@ -110,7 +110,7 @@ for (let i = 0; i < 5; i++) {
 
 
 
-<center>![]({{site.baseurl}}/assets/img/throttle.png)</center>
+![]({{site.baseurl}}/assets/img/throttle.png)
 
 throttle 会强制函数以固定速率执行，每次间隔500ms以上
 
